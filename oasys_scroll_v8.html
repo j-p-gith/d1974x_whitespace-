@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>D1974X — OASys Whitespace</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #000;
+    font-family: 'Menlo', 'Courier New', monospace;
+    overflow: hidden;
+    height: 100vh;
+    width: 100vw;
+  }
+
+  #info {
+    position: fixed;
+    top: 2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    text-align: center;
+    z-index: 100;
+    pointer-events: none;
+  }
+
+  #title {
+    font-size: clamp(1.2rem, 3vw, 2rem);
+    color: #C8102E;
+    letter-spacing: 0.3em;
+    margin-bottom: 0.4rem;
+  }
+
+  #subtitle {
+    font-size: clamp(0.5rem, 1.1vw, 0.7rem);
+    color: #333;
+    letter-spacing: 0.12em;
+  }
+
+  #phase-label {
+    position: fixed;
+    top: 2rem;
+    right: 2rem;
+    font-size: 0.6rem;
+    color: #555;
+    letter-spacing: 0.15em;
+    z-index: 100;
+    text-align: right;
+    line-height: 2;
+  }
+
+  #counter {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    font-size: 0.6rem;
+    color: #222;
+    letter-spacing: 0.1em;
+    z-index: 100;
+    text-align: right;
+    line-height: 1.8;
+  }
+
+  #controls {
+    position: fixed;
+    bottom: 2rem;
+    left: 2rem;
+    z-index: 100;
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+  }
+
+  .ctrl-btn {
+    background: none;
+    border: 0.5px solid #222;
+    color: #333;
+    font-family: 'Menlo', monospace;
+    font-size: 0.6rem;
+    padding: 4px 10px;
+    cursor: pointer;
+    letter-spacing: 0.08em;
+  }
+
+  .ctrl-btn:hover { border-color: #fff; color: #fff; }
+  #speed-label { font-size: 0.58rem; color: #222; letter-spacing: 0.1em; }
+
+  .scroll-layer {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    overflow: hidden;
+  }
+
+  .scroll-track {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%;
+    padding-top: 100vh;
+    padding-bottom: 100vh;
+    padding-left: 2rem;
+    padding-right: 2rem;
+    will-change: transform;
+  }
+
+  .code-block { font-size: 13px; line-height: 1.7; letter-spacing: 0.03em; }
+  .code-line { display: block; white-space: pre; min-height: 1.7em; }
+
+  #layer-content { z-index: 1; }
+  #layer-ws { z-index: 2; pointer-events: none; }
+
+  .content-line { color: #5aadff; }
+  .ws-line { color: transparent; }
+  .ws-char { color: #ffffff; }
+
+  #fade-top {
+    position: fixed; top: 0; left: 0; right: 0; height: 180px;
+    background: linear-gradient(to bottom, #000 30%, transparent 100%);
+    z-index: 50; pointer-events: none;
+  }
+
+  #fade-bottom {
+    position: fixed; bottom: 0; left: 0; right: 0; height: 180px;
+    background: linear-gradient(to top, #000 30%, transparent 100%);
+    z-index: 50; pointer-events: none;
+  }
+
+  #progress {
+    position: fixed; top: 0; left: 0;
+    height: 1px; background: #C8102E;
+    z-index: 200; opacity: 0.5;
+  }
+</style>
+</head>
+<body>
+
+<div id="progress"></div>
+<div id="fade-top"></div>
+<div id="fade-bottom"></div>
+
+<div id="info">
+  <div id="title">D1974X</div>
+  <div id="subtitle">OASys · 473,404 characters · 87,259 whitespace</div>
+</div>
+
+<div id="phase-label">
+  <div id="phase-name">full code</div>
+  <div id="phase-desc">content visible · whitespace marked</div>
+</div>
+
+<div class="scroll-layer" id="layer-content">
+  <div class="scroll-track" id="track-content">
+    <div class="code-block" id="text-content"></div>
+  </div>
+</div>
+
+<div class="scroll-layer" id="layer-ws">
+  <div class="scroll-track" id="track-ws">
+    <div class="code-block" id="text-ws"></div>
+  </div>
+</div>
+
+<div id="counter">
+  <div id="char-count">—</div>
+  <div style="color:#1a1a1a">whitespace characters</div>
+</div>
+
+<div id="controls">
+  <button class="ctrl-btn" onclick="togglePause()" id="pause-btn">pause</button>
+  <button class="ctrl-btn" onclick="changeSpeed(-1)">slower</button>
+  <button class="ctrl-btn" onclick="changeSpeed(1)">faster</button>
+  <span id="speed-label">speed 2</span>
+</div>
+
+<script>
+const lines = [
+  "  package uk.gov.justice.digital.hmpps.assessrisksandneeds.api.model",
+  "",
+  "  import uk.gov.justice.digital.hmpps.assessrisksandneeds.restclient.api.AllRisksOasysRiskPredictorsDto",
+  "  import uk.gov.justice.digital.hmpps.assessrisksandneeds.restclient.api.AllRisksPredictorAssessmentDto",
+  "  import uk.gov.justice.digital.hmpps.assessrisksandneeds.restclient.api.RisksCrAssPredictorAssessmentDto",
+  "  import java.time.LocalDateTime",
+  "",
+  "  class RiskScoresDto(",
+  "    val completedDate: LocalDateTime? = null,",
+  "    val assessmentStatus: String? = null,",
+  "    val groupReconvictionScore: OgrScoreDto? = null,",
+  "    val violencePredictorScore: OvpScoreDto? = null,",
+  "    val generalPredictorScore: OgpScoreDto? = null,",
+  "    val riskOfSeriousRecidivismScore: RsrScoreDto? = null,",
+  "    val sexualPredictorScore: OspScoreDto? = null,",
+  "  ) {",
+  "",
+  "    companion object {",
+  "",
+  "      fun from(allRisksOasysRiskPredictorsDto: AllRisksOasysRiskPredictorsDto?): List<RiskScoresDto>",
+  "          = allRisksOasysRiskPredictorsDto?.assessments?.filter {",
+  "            it.assessmentType in listOf(\"LAYER3\", \"LAYER1\")",
+  "          }?.map {",
+  "            RiskScoresDto(",
+  "              completedDate = it.dateCompleted,",
+  "              assessmentStatus = it.assessmentStatus.name,",
+  "              groupReconvictionScore = OgrScoreDto(",
+  "                oneYear = it.ogrScoreDto.ogrs31Year,",
+  "                twoYears = it.ogrScoreDto.ogrs32Year,",
+  "                scoreLevel = ScoreLevel.findByType(it.ogrScoreDto.ogrs3RiskRecon),",
+  "              ),",
+  "              violencePredictorScore = OvpScoreDto(",
+  "                ovpStaticWeightedScore = it.ovpScoreDto.ovpStWesc,",
+  "                ovpDynamicWeightedScore = it.ovpScoreDto.ovpDyWesc,",
+  "                ovpTotalWeightedScore = it.ovpScoreDto.ovpTotWesc,",
+  "                oneYear = it.ovpScoreDto.ovp1Year,",
+  "                twoYears = it.ovpScoreDto.ovp2Year,",
+  "                ovpRisk = ScoreLevel.findByType(it.ovpScoreDto.ovpRisk),",
+  "              ),",
+  "              generalPredictorScore = OgpScoreDto(",
+  "                ogpStaticWeightedScore = it.ogpScoreDto.ogpStWesc,",
+  "                ogpDynamicWeightedScore = it.ogpScoreDto.ogpDyWesc,",
+  "                ogpTotalWeightedScore = it.ogpScoreDto.ogpTotWesc,",
+  "                ogp1Year = it.ogpScoreDto.ogp1Year,",
+  "                ogp2Year = it.ogpScoreDto.ogp2Year,",
+  "                ogpRisk = ScoreLevel.findByType(it.ogpScoreDto.ogpRisk),",
+  "              ),",
+  "              riskOfSeriousRecidivismScore = RsrScoreDto(",
+  "                percentageScore = it.rsrScoreDto.rsrPercentageScore,",
+  "                staticOrDynamic = it.rsrScoreDto.rsrStaticOrDynamic,",
+  "                source = RsrScoreSource.OASYS,",
+  "                algorithmVersion = it.rsrScoreDto.rsrAlgorithmVersion,",
+  "                scoreLevel = ScoreLevel.findByType(it.rsrScoreDto.scoreLevel),",
+  "              ),",
+  "              sexualPredictorScore = OspScoreDto(",
+  "                ospIndecentPercentageScore = it.ospScoreDto.ospImagePercentageScore,",
+  "                ospContactPercentageScore = it.ospScoreDto.ospContactPercentageScore,",
+  "                ospIndecentScoreLevel = ScoreLevel.findByType(it.ospScoreDto.ospImageScoreLevel),",
+  "                ospContactScoreLevel = ScoreLevel.findByType(it.ospScoreDto.ospContactScoreLevel),",
+  "              ),",
+  "            )",
+  "          }.orEmpty()",
+  "    }",
+  "  }",
+  "}",
+  "",
+  "      fun fromVersioned(assessment: AllRisksPredictorAssessmentDto): RiskScoresDto =",
+  "        RiskScoresDto(",
+  "          groupReconvictionScore = OgrScoreDto(",
+  "            oneYear = assessment.ogrScoreDto.ogrs31Year,",
+  "            twoYears = assessment.ogrScoreDto.ogrs32Year,",
+  "            scoreLevel = ScoreLevel.findByType(assessment.ogrScoreDto.ogrs3RiskRecon),",
+  "          ),",
+  "          riskOfSeriousRecidivismScore = RsrScoreDto(",
+  "            percentageScore = assessment.rsrScoreDto.rsrPercentageScore,",
+  "            staticOrDynamic = assessment.rsrScoreDto.rsrStaticOrDynamic,",
+  "            source = RsrScoreSource.OASYS,",
+  "            algorithmVersion = assessment.rsrScoreDto.rsrAlgorithmVersion,",
+  "            scoreLevel = ScoreLevel.findByType(assessment.rsrScoreDto.scoreLevel),",
+  "          ),",
+  "        )",
+  "",
+  "      fun fromVersioned(assessment: RisksCrAssPredictorAssessmentDto): RiskScoresDto =",
+  "        RiskScoresDto(",
+  "          groupReconvictionScore = OgrScoreDto(",
+  "            oneYear = assessment.ogrScoreDto.ogrs31Year,",
+  "            twoYears = assessment.ogrScoreDto.ogrs32Year,",
+  "          ),",
+  "          riskOfSeriousRecidivismScore = RsrScoreDto(",
+  "            source = RsrScoreSource.OASYS,",
+  "            scoreLevel = ScoreLevel.findByType(assessment.rsrScoreDto.scoreLevel),",
+  "          ),",
+  "        )",
+  "",
+];
+
+let scrollY = 0;
+let speed = 0.5;
+let paused = false;
+let speedLevel = 2;
+let totalHeight = 0;
+
+function escapeHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function buildText() {
+  const fullLines = [];
+  for (let i = 0; i < 120; i++) {
+    fullLines.push(lines[i % lines.length]);
+  }
+
+  let contentHtml = '';
+  let wsHtml = '';
+
+  for (const line of fullLines) {
+    const safe = escapeHtml(line);
+    contentHtml += `<span class="code-line content-line">${safe || '\u00a0'}</span>`;
+
+    let wsLine = '';
+    for (const ch of line) {
+      if (ch === ' ') {
+        wsLine += '<span class="ws-char">\u25a1</span>';
+      } else if (ch === '\t') {
+        wsLine += '<span class="ws-char">\u25b7</span>';
+      } else {
+        wsLine += `<span style="opacity:0">${escapeHtml(ch)}</span>`;
+      }
+    }
+    wsHtml += `<span class="code-line ws-line">${wsLine || '\u00a0'}</span>`;
+  }
+
+  document.getElementById('text-content').innerHTML = contentHtml;
+  document.getElementById('text-ws').innerHTML = wsHtml;
+
+  requestAnimationFrame(() => {
+    totalHeight = document.getElementById('track-content').scrollHeight;
+  });
+}
+
+function lerp(a, b, t) { return a + (b-a) * Math.max(0, Math.min(1, t)); }
+function easeInOut(t) { return t < 0.5 ? 2*t*t : -1+(4-2*t)*t; }
+
+function updatePhase(progress) {
+  let contentOpacity, wsOpacity, name, desc;
+
+  if (progress < 0.33) {
+    const t = progress / 0.33;
+    contentOpacity = 1;
+    wsOpacity = lerp(0.2, 0.25, t);
+    name = 'full code';
+    desc = 'content visible · whitespace marked';
+
+  } else if (progress < 0.66) {
+    const t = easeInOut((progress - 0.33) / 0.33);
+    contentOpacity = lerp(1, 0, t);
+    wsOpacity = lerp(0.25, 1, t);
+    name = 'dissolving';
+    desc = 'content fading · whitespace emerging';
+
+  } else {
+    contentOpacity = 0;
+    wsOpacity = 1;
+    name = '—';
+    desc = '—';
+  }
+
+  document.getElementById('layer-content').style.opacity = contentOpacity;
+  document.getElementById('layer-ws').style.opacity = wsOpacity;
+  document.getElementById('phase-name').textContent = name;
+  document.getElementById('phase-desc').textContent = desc;
+}
+
+function togglePause() {
+  paused = !paused;
+  document.getElementById('pause-btn').textContent = paused ? 'play' : 'pause';
+  if (!paused) animate();
+}
+
+function changeSpeed(dir) {
+  speedLevel = Math.max(1, Math.min(5, speedLevel + dir));
+  const speeds = [0.15, 0.5, 1.0, 2.0, 4.0];
+  speed = speeds[speedLevel - 1];
+  document.getElementById('speed-label').textContent = `speed ${speedLevel}`;
+}
+
+function animate() {
+  if (paused) return;
+
+  if (totalHeight > 0) {
+    scrollY += speed;
+    const trackHeight = Math.max(1, totalHeight - window.innerHeight);
+    if (scrollY > trackHeight) scrollY = 0;
+
+    const transform = `translateY(${-scrollY}px)`;
+    document.getElementById('track-content').style.transform = transform;
+    document.getElementById('track-ws').style.transform = transform;
+
+    const progress = scrollY / trackHeight;
+    document.getElementById('progress').style.width = (progress * 100) + '%';
+    updatePhase(progress);
+
+    const wsChar = Math.floor(progress * 87259);
+    document.getElementById('char-count').textContent =
+      `${wsChar.toLocaleString()} / 87,259`;
+  }
+
+  requestAnimationFrame(animate);
+}
+
+buildText();
+setTimeout(animate, 100);
+
+document.addEventListener('keydown', e => {
+  if (e.key === ' ') { e.preventDefault(); togglePause(); }
+  if (e.key === 'ArrowUp') changeSpeed(1);
+  if (e.key === 'ArrowDown') changeSpeed(-1);
+});
+</script>
+</body>
+</html>
